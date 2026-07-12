@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Resume Agent</title>
+<link rel="icon" type="image/png" href="resume-agent-logo.png" />
+<style>
+  :root {
+    --bg-page: #0a0808;
+    --bg-card: #171012;
+    --bg-card-hover: #1f1517;
+    --bg-input: #120d0e;
+    --red: #e5484d;            /* data marks (chart bars), links */
+    --red-bright: #ef4444;     /* button gradient top */
+    --red-dark: #b91c1c;       /* button gradient bottom / hover */
+    --red-wash: rgba(229,72,77,0.12);
+    --border: rgba(255,255,255,0.08);
+    --ink-primary: #f5f2f1;
+    --ink-secondary: #b8adac;
+    --ink-muted: #8a7f7d;
+    --grid: #2a2020;
+    --good: #4ade80;
+    --warning: #fbbf24;
+    --critical: #f87171;
+    --sidebar-bg: #0d0909;
+    --tooltip-bg: #050404;
+  }
+  /* Light theme — scoped to the dashboard shell only; login/splash stay dark as brand identity */
+  #app.theme-light {
+    --bg-page: #f7f5f4;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f2eeec;
+    --bg-input: #ffffff;
+    --border: rgba(11,11,11,0.10);
+    --ink-primary: #1a1414;
+    --ink-secondary: #5c5250;
+    --ink-muted: #8a7f7d;
+    --grid: #e8e2e0;
+    --red: #c53030;
+    --red-wash: rgba(197,48,48,0.08);
+    --good: #0ca30c;
+    --warning: #92650b;
+    --critical: #d03b3b;
+    --sidebar-bg: #ffffff;
+    --tooltip-bg: #1a1414;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0;
+    background: var(--bg-page);
+    color: var(--ink-primary);
+  }
+  .hidden { display: none !important; }
+  a { color: var(--red); }
+
+  /* ---- splash screen ---- */
+  #splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(229,72,77,0.14), transparent 60%),
+      var(--bg-page);
+    transition: opacity 0.8s ease;
+  }
+  #splash-screen.fade-out { opacity: 0; pointer-events: none; }
+  #splash-screen img {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(229,72,77,0.35);
+    opacity: 0;
+    transform: scale(0.85);
+    animation: splash-pop 1.4s ease forwards;
+  }
+  #splash-screen .splash-title {
+    margin-top: 18px;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink-primary);
+    opacity: 0;
+    animation: splash-fade 1.4s ease forwards 0.5s;
+  }
+  @keyframes splash-pop {
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes splash-fade {
+    to { opacity: 1; }
+  }
+
+  /* ---- login ---- */
+  #login-view {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(229,72,77,0.10), transparent 60%),
+      var(--bg-page);
+  }
+  #login-view .login-card {
+    width: 340px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .login-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(160deg, var(--red-bright), var(--red-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .login-icon svg { width: 24px; height: 24px; }
+  #login-view h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+    color: var(--ink-primary);
+  }
+  #login-view .subtitle {
+    font-size: 13px;
+    color: var(--ink-secondary);
+    margin: 0 0 24px;
+  }
+  .field-label {
+    display: block;
+    font-size: 13px;
+    color: var(--ink-secondary);
+    margin: 0 0 6px;
+  }
+  .field-group { margin-bottom: 16px; }
+  #login-view input {
+    width: 100%;
+    padding: 11px 12px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-input);
+    color: var(--ink-primary);
+  }
+  #login-view input::placeholder { color: var(--ink-muted); }
+  #login-view input:focus { outline: none; border-color: var(--red); }
+  .forgot-link {
+    display: block;
+    text-align: right;
+    font-size: 13px;
+    color: var(--red);
+    text-decoration: none;
+    margin: -8px 0 20px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    width: 100%;
+  }
+  .forgot-link:hover { text-decoration: underline; }
+  button.btn-login {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    background: linear-gradient(160deg, var(--red-bright), var(--red-dark));
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(229,72,77,0.35);
+  }
+  button.btn-login:hover { filter: brightness(1.05); }
+  button.btn-back {
+    background: none;
+    border: none;
+    color: var(--ink-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 16px;
+  }
+  button.btn-back:hover { color: var(--ink-primary); }
+  #login-error, #forgot-error, #reset-error { color: var(--critical); font-size: 13px; min-height: 16px; margin: 8px 0 0; }
+  #forgot-success, #reset-success { color: var(--good); font-size: 13px; min-height: 16px; margin: 8px 0 0; }
+  .login-footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 24px;
+  }
+
+  /* ---- app shell ---- */
+  #app {
+    display: flex;
+    min-height: 100vh;
+  }
+  #sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    color: var(--ink-primary);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  #sidebar .brand {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink-primary);
+    margin-bottom: 28px;
+    padding: 0 8px;
+  }
+  #sidebar nav { display: flex; flex-direction: column; gap: 4px; }
+  #sidebar .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--ink-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    text-align: left;
+    width: 100%;
+  }
+  #sidebar .nav-item:hover { background: var(--bg-card-hover); color: var(--ink-primary); }
+  #sidebar .nav-item.active {
+    background: linear-gradient(160deg, var(--red-bright), var(--red-dark));
+    color: #fff;
+    font-weight: 600;
+  }
+  #sidebar .nav-spacer { flex: 1; }
+  #sidebar .logout-btn {
+    color: var(--ink-secondary);
+    font-size: 13px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px 12px;
+    text-align: left;
+  }
+  #sidebar .logout-btn:hover { color: var(--ink-primary); }
+  #sidebar .theme-toggle {
+    color: var(--ink-secondary);
+    font-size: 13px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 8px 12px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  #sidebar .theme-toggle:hover { background: var(--bg-card-hover); color: var(--ink-primary); }
+  #sidebar .theme-toggle svg { width: 15px; height: 15px; }
+
+  #main-content { flex: 1; padding: 32px 40px; min-width: 0; background: var(--bg-page); }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .topbar h1 { font-size: 22px; margin: 0; letter-spacing: 0.3px; color: var(--ink-primary); }
+  .topbar .actions { display: flex; gap: 10px; align-items: center; }
+
+  button.btn-primary {
+    background: linear-gradient(160deg, var(--red-bright), var(--red-dark));
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.btn-primary:hover { filter: brightness(1.05); }
+  button.btn-secondary {
+    background: var(--bg-card);
+    color: var(--ink-primary);
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.btn-secondary:hover { background: var(--bg-card-hover); }
+  #sync-status { font-size: 12px; color: var(--ink-secondary); margin-left: 4px; }
+
+  /* ---- stat tiles ---- */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .stat-tile {
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+  }
+  .stat-tile .stat-label {
+    font-size: 12px;
+    color: var(--ink-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .stat-tile .stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .stat-tile .stat-value { font-size: 28px; font-weight: 600; color: var(--ink-primary); }
+
+  /* ---- cards ---- */
+  .card {
+    background: var(--bg-card);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 14px; margin: 0 0 14px; color: var(--ink-primary); }
+
+  /* ---- chart ---- */
+  #chart-wrap { position: relative; }
+  #chart-empty { font-size: 13px; color: var(--ink-muted); padding: 20px 0; }
+  .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--tooltip-bg);
+    border: 1px solid var(--border);
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transform: translate(-50%, -110%);
+    white-space: nowrap;
+    z-index: 5;
+  }
+  .chart-tooltip .tt-value { font-weight: 700; }
+  .chart-tooltip .tt-label { color: var(--ink-secondary); margin-top: 2px; }
+  .bar-rect { transition: opacity 0.1s; cursor: pointer; }
+  .bar-rect:hover { opacity: 0.75; }
+
+  /* ---- table ---- */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--grid); font-size: 13px; color: var(--ink-primary); }
+  th { color: var(--ink-secondary); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+  .badge.shortlisted { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+  .badge.rejected { background: color-mix(in srgb, var(--critical) 14%, transparent); color: var(--critical); }
+  .badge.pending { background: color-mix(in srgb, var(--warning) 14%, transparent); color: var(--warning); }
+  #resume-rows button {
+    background: transparent;
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #resume-rows button:hover { background: var(--red-wash); }
+
+  /* ---- empty state ---- */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .empty-state .empty-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: linear-gradient(160deg, var(--red-bright), var(--red-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .empty-state .empty-icon svg { width: 28px; height: 28px; }
+  .empty-state h3 { margin: 0 0 6px; font-size: 15px; color: var(--ink-primary); }
+  .empty-state p { margin: 0 0 18px; font-size: 13px; color: var(--ink-muted); max-width: 320px; }
+
+  /* ---- skeleton loading rows ---- */
+  .skeleton-bar {
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--grid) 25%, var(--bg-card-hover) 50%, var(--grid) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ---- toasts ---- */
+  #toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--good);
+    color: var(--ink-primary);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    min-width: 240px;
+    max-width: 360px;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  .toast.show { transform: translateX(0); opacity: 1; }
+  .toast.error { border-left-color: var(--critical); }
+</style>
+</head>
+<body>
+
+<div id="splash-screen">
+  <img src="resume-agent-logo.png" alt="Resume Agent" />
+  <div class="splash-title">Resume Agent</div>
+</div>
+
+<div id="login-view">
+  <div class="login-card">
+
+    <!-- Log in -->
+    <div id="view-login">
+      <div class="login-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" fill="#fff" fill-opacity="0.95"/>
+          <path d="M14 2v5h5" fill="none" stroke="#b91c1c" stroke-width="1.2"/>
+          <path d="M8 12h8M8 15.5h8M8 9h4" stroke="#b91c1c" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h1>Resume Agent</h1>
+      <p class="subtitle">Sign in to the admin console</p>
+
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <input id="username" placeholder="your.username" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <input id="password" type="password" placeholder="••••••••" />
+      </div>
+      <button type="button" class="forgot-link" onclick="showView('forgot')">Forgot password?</button>
+      <button class="btn-login" onclick="login()">Log in</button>
+      <p id="login-error"></p>
+
+      <p class="login-footer">Protected admin area · Resume Agent v1.0</p>
+    </div>
+
+    <!-- Forgot password -->
+    <div id="view-forgot" class="hidden">
+      <button class="btn-back" onclick="showView('login')">&larr; Back to login</button>
+      <h1>Reset your password</h1>
+      <p class="subtitle">We'll email a reset link to the admin inbox.</p>
+
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <input id="forgot-username" placeholder="your.username" />
+      </div>
+      <button class="btn-login" onclick="requestReset()">Send reset link</button>
+      <p id="forgot-error"></p>
+      <p id="forgot-success"></p>
+    </div>
+
+    <!-- Reset password (arrived via emailed link) -->
+    <div id="view-reset" class="hidden">
+      <h1>Set a new password</h1>
+      <p class="subtitle">Choose a new password for your admin account.</p>
+
+      <div class="field-group">
+        <label class="field-label">New password</label>
+        <input id="reset-new-password" type="password" placeholder="••••••••" />
+      </div>
+      <button class="btn-login" onclick="submitReset()">Update password</button>
+      <p id="reset-error"></p>
+      <p id="reset-success"></p>
+    </div>
+
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div id="sidebar">
+    <div class="brand">Resume Agent</div>
+    <nav>
+      <button class="nav-item active">Dashboard</button>
+    </nav>
+    <div class="nav-spacer"></div>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+      <svg id="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      <span id="theme-label">Dark mode</span>
+    </button>
+    <button class="logout-btn" onclick="logout()">Log out</button>
+  </div>
+
+  <div id="main-content">
+    <div id="panel-dashboard">
+      <div class="topbar">
+        <h1>Dashboard</h1>
+        <div class="actions">
+          <button class="btn-secondary" onclick="exportCsv()">Export CSV</button>
+          <button class="btn-primary" onclick="syncResumes()">Sync from Gmail</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-tile">
+          <div class="stat-label"><span class="stat-dot" style="background:var(--red)"></span>Total resumes</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label"><span class="stat-dot" style="background:var(--warning)"></span>Pending</div>
+          <div class="stat-value" id="stat-pending">0</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label"><span class="stat-dot" style="background:var(--good)"></span>Shortlisted</div>
+          <div class="stat-value" id="stat-shortlisted">0</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-label"><span class="stat-dot" style="background:var(--critical)"></span>Rejected</div>
+          <div class="stat-value" id="stat-rejected">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Resumes received per day</h2>
+        <div id="chart-wrap"></div>
+      </div>
+
+      <div class="card">
+        <h2>Resumes</h2>
+        <table>
+          <thead>
+            <tr><th>Sender</th><th>Filename</th><th>Score</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="resume-rows"></tbody>
+        </table>
+        <div id="resume-empty" class="empty-state hidden">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" fill="#fff" fill-opacity="0.95"/>
+              <path d="M14 2v5h5" fill="none" stroke="#b91c1c" stroke-width="1.2"/>
+              <path d="M8 12h8M8 15.5h8M8 9h4" stroke="#b91c1c" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>No resumes yet</h3>
+          <p>Sync your Gmail inbox to pull in new resumes and start screening candidates.</p>
+          <button class="btn-primary" onclick="syncResumes()">Sync from Gmail</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+const API_BASE = "http://localhost:8000/api";
+let token = null;
+let latestRecords = [];
+
+function showView(view) {
+  document.getElementById("view-login").classList.toggle("hidden", view !== "login");
+  document.getElementById("view-forgot").classList.toggle("hidden", view !== "forgot");
+  document.getElementById("view-reset").classList.toggle("hidden", view !== "reset");
+}
+
+// If the page loaded from a password-reset email link (?reset_token=...), show that view.
+(function checkForResetToken() {
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get("reset_token");
+  if (resetToken) {
+    showView("reset");
+  }
+})();
+
+// Opening splash animation, then reveal whichever view is underneath.
+setTimeout(() => {
+  const splash = document.getElementById("splash-screen");
+  splash.classList.add("fade-out");
+  setTimeout(() => splash.remove(), 800);
+}, 3000);
+
+async function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) {
+    document.getElementById("login-error").innerText = "Login failed — check credentials";
+    return;
+  }
+  const data = await res.json();
+  token = data.access_token;
+  document.getElementById("login-view").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  loadResumes();
+}
+
+async function requestReset() {
+  const username = document.getElementById("forgot-username").value;
+  document.getElementById("forgot-error").innerText = "";
+  document.getElementById("forgot-success").innerText = "";
+
+  const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById("forgot-error").innerText = data.detail || "Something went wrong";
+    return;
+  }
+  document.getElementById("forgot-success").innerText = data.message;
+}
+
+async function submitReset() {
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get("reset_token");
+  const newPassword = document.getElementById("reset-new-password").value;
+
+  document.getElementById("reset-error").innerText = "";
+  document.getElementById("reset-success").innerText = "";
+
+  const res = await fetch(`${API_BASE}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: resetToken, new_password: newPassword }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById("reset-error").innerText = data.detail || "Something went wrong";
+    return;
+  }
+  document.getElementById("reset-success").innerText = data.message;
+  setTimeout(() => {
+    window.location.href = window.location.pathname;
+  }, 1500);
+}
+
+function logout() {
+  token = null;
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("login-view").classList.remove("hidden");
+  document.getElementById("password").value = "";
+}
+
+const SUN_ICON = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+const MOON_ICON = '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
+
+function applyTheme(theme) {
+  const app = document.getElementById("app");
+  app.classList.toggle("theme-light", theme === "light");
+  document.getElementById("theme-icon").innerHTML = theme === "light" ? SUN_ICON : MOON_ICON;
+  document.getElementById("theme-label").textContent = theme === "light" ? "Light mode" : "Dark mode";
+  renderChart(latestRecords);
+}
+
+function toggleTheme() {
+  const next = document.getElementById("app").classList.contains("theme-light") ? "dark" : "light";
+  localStorage.setItem("theme", next);
+  applyTheme(next);
+}
+
+applyTheme(localStorage.getItem("theme") || "dark");
+
+function cssVar(name) {
+  return getComputedStyle(document.getElementById("app")).getPropertyValue(name).trim();
+}
+
+function showToast(message, type = "success") {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+function renderTableSkeleton(rowCount = 4) {
+  const rows = document.getElementById("resume-rows");
+  const empty = document.getElementById("resume-empty");
+  empty.classList.add("hidden");
+  rows.innerHTML = "";
+  for (let i = 0; i < rowCount; i++) {
+    const tr = document.createElement("tr");
+    for (let c = 0; c < 5; c++) {
+      const td = document.createElement("td");
+      const bar = document.createElement("div");
+      bar.className = "skeleton-bar";
+      bar.style.width = c === 4 ? "50px" : "80%";
+      td.appendChild(bar);
+      tr.appendChild(td);
+    }
+    rows.appendChild(tr);
+  }
+}
+
+function authHeaders(extra = {}) {
+  return { "Authorization": `Bearer ${token}`, ...extra };
+}
+
+async function loadResumes() {
+  const res = await fetch(`${API_BASE}/resumes`, { headers: authHeaders() });
+  const records = await res.json();
+  latestRecords = records;
+  renderStats(records);
+  renderChart(records);
+  renderTable(records);
+}
+
+function renderStats(records) {
+  document.getElementById("stat-total").textContent = records.length;
+  document.getElementById("stat-pending").textContent = records.filter(r => r.status === "pending").length;
+  document.getElementById("stat-shortlisted").textContent = records.filter(r => r.status === "shortlisted").length;
+  document.getElementById("stat-rejected").textContent = records.filter(r => r.status === "rejected").length;
+}
+
+function renderTable(records) {
+  const rows = document.getElementById("resume-rows");
+  const empty = document.getElementById("resume-empty");
+  rows.innerHTML = "";
+  empty.classList.toggle("hidden", records.length > 0);
+
+  records.forEach(r => {
+    const tr = document.createElement("tr");
+
+    const tdSender = document.createElement("td");
+    tdSender.textContent = r.sender;
+    const tdFile = document.createElement("td");
+    tdFile.textContent = r.filename;
+    const tdScore = document.createElement("td");
+    tdScore.textContent = r.score ?? "—";
+    const tdStatus = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = `badge ${r.status}`;
+    badge.textContent = r.status;
+    tdStatus.appendChild(badge);
+    const tdAction = document.createElement("td");
+    if (r.status === "pending") {
+      const btn = document.createElement("button");
+      btn.textContent = "Score";
+      btn.onclick = () => scoreResume(r.id);
+      tdAction.appendChild(btn);
+    }
+
+    tr.append(tdSender, tdFile, tdScore, tdStatus, tdAction);
+    rows.appendChild(tr);
+  });
+}
+
+function renderChart(records) {
+  const wrap = document.getElementById("chart-wrap");
+  wrap.innerHTML = "";
+
+  if (records.length === 0) {
+    const empty = document.createElement("div");
+    empty.id = "chart-empty";
+    empty.textContent = "No data yet — sync resumes to see daily volume.";
+    wrap.appendChild(empty);
+    return;
+  }
+
+  // group by date (YYYY-MM-DD) from created_at
+  const counts = {};
+  records.forEach(r => {
+    const day = (r.created_at || "").slice(0, 10) || "unknown";
+    counts[day] = (counts[day] || 0) + 1;
+  });
+  const days = Object.keys(counts).sort().slice(-14);
+  const values = days.map(d => counts[d]);
+  const maxVal = Math.max(...values, 1);
+
+  const width = 720, height = 220;
+  const padLeft = 40, padBottom = 24, padTop = 10, padRight = 10;
+  const plotW = width - padLeft - padRight;
+  const plotH = height - padTop - padBottom;
+  const barSlot = plotW / days.length;
+  const barWidth = Math.min(24, barSlot * 0.6);
+
+  const gridColor = cssVar("--grid");
+  const labelColor = cssVar("--ink-muted");
+  const barColor = cssVar("--red");
+
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", height);
+  svg.style.overflow = "visible";
+
+  // gridlines (0, mid, max) — cap steps so small counts don't produce duplicate rounded labels
+  const gridSteps = Math.max(1, Math.min(4, maxVal));
+  for (let i = 0; i <= gridSteps; i++) {
+    const y = padTop + (plotH * i) / gridSteps;
+    const line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", padLeft);
+    line.setAttribute("x2", width - padRight);
+    line.setAttribute("y1", y);
+    line.setAttribute("y2", y);
+    line.setAttribute("stroke", gridColor);
+    line.setAttribute("stroke-width", "1");
+    svg.appendChild(line);
+
+    const label = document.createElementNS(svgNS, "text");
+    const val = Math.round(maxVal * (1 - i / gridSteps));
+    label.textContent = val;
+    label.setAttribute("x", padLeft - 8);
+    label.setAttribute("y", y + 4);
+    label.setAttribute("text-anchor", "end");
+    label.setAttribute("font-size", "11");
+    label.setAttribute("fill", labelColor);
+    svg.appendChild(label);
+  }
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "chart-tooltip hidden";
+  wrap.appendChild(tooltip);
+
+  days.forEach((day, i) => {
+    const val = counts[day];
+    const barH = (val / maxVal) * plotH;
+    const x = padLeft + i * barSlot + (barSlot - barWidth) / 2;
+    const y = padTop + plotH - barH;
+
+    const rect = document.createElementNS(svgNS, "rect");
+    rect.setAttribute("class", "bar-rect");
+    rect.setAttribute("x", x);
+    rect.setAttribute("y", y);
+    rect.setAttribute("width", barWidth);
+    rect.setAttribute("height", Math.max(barH, 2));
+    rect.setAttribute("rx", "4");
+    rect.setAttribute("fill", barColor);
+
+    rect.addEventListener("pointerenter", () => {
+      tooltip.classList.remove("hidden");
+      tooltip.innerHTML = "";
+      const v = document.createElement("div");
+      v.className = "tt-value";
+      v.textContent = `${val} resume${val === 1 ? "" : "s"}`;
+      const l = document.createElement("div");
+      l.className = "tt-label";
+      l.textContent = day;
+      tooltip.append(v, l);
+      tooltip.style.left = `${x + barWidth / 2}px`;
+      tooltip.style.top = `${y}px`;
+    });
+    rect.addEventListener("pointerleave", () => tooltip.classList.add("hidden"));
+
+    svg.appendChild(rect);
+
+    // x-axis label (every day if few, else thin out)
+    const showLabel = days.length <= 8 || i % Math.ceil(days.length / 8) === 0;
+    if (showLabel) {
+      const label = document.createElementNS(svgNS, "text");
+      label.textContent = day.slice(5); // MM-DD
+      label.setAttribute("x", x + barWidth / 2);
+      label.setAttribute("y", height - 6);
+      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("font-size", "11");
+      label.setAttribute("fill", labelColor);
+      svg.appendChild(label);
+    }
+  });
+
+  wrap.appendChild(svg);
+}
+
+async function syncResumes() {
+  renderTableSkeleton();
+  try {
+    const res = await fetch(`${API_BASE}/resumes/sync`, { method: "POST", headers: authHeaders() });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.detail || "Sync failed", "error");
+    } else {
+      showToast(`Synced ${data.synced} new resume${data.synced === 1 ? "" : "s"}`, "success");
+    }
+  } catch (e) {
+    showToast("Sync failed — check backend connection", "error");
+  }
+  loadResumes();
+}
+
+async function scoreResume(id) {
+  try {
+    const res = await fetch(`${API_BASE}/resumes/${id}/score`, { method: "POST", headers: authHeaders() });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.detail || "Scoring failed", "error");
+    } else {
+      showToast(`Scored ${data.score} — ${data.status}`, "success");
+    }
+  } catch (e) {
+    showToast("Scoring failed — check backend connection", "error");
+  }
+  loadResumes();
+}
+
+async function exportCsv() {
+  const res = await fetch(`${API_BASE}/resumes/export/csv`, { headers: authHeaders() });
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "resumes_export.csv";
+  a.click();
+}
+</script>
+</body>
+</html>
