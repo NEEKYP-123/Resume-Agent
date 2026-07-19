@@ -48,6 +48,10 @@ def create_entry(sender: str, subject: str, b2_key: str, filename: str) -> Dict:
         "status": "pending",
         "score": None,
         "summary": None,
+        "ats_score": None,
+        "ats_summary": None,
+        "job_id": None,
+        "notes": [],
         "created_at": datetime.utcnow().isoformat(),
     }
 
@@ -62,7 +66,7 @@ def create_entry(sender: str, subject: str, b2_key: str, filename: str) -> Dict:
     return record
 
 
-def update_result(record_id: str, score: int, summary: str, status: str):
+def update_result(record_id: str, score: int, summary: str, status: str, ats_score=None, ats_summary=None):
     if settings.LOCAL_MODE:
         records = _read_local()
         for r in records:
@@ -70,13 +74,18 @@ def update_result(record_id: str, score: int, summary: str, status: str):
                 r["score"] = score
                 r["summary"] = summary
                 r["status"] = status
+                r["ats_score"] = ats_score
+                r["ats_summary"] = ats_summary
         _write_local(records)
         return
 
     collection = _get_collection()
     collection.update_one(
         {"id": record_id},
-        {"$set": {"score": score, "summary": summary, "status": status}},
+        {"$set": {
+            "score": score, "summary": summary, "status": status,
+            "ats_score": ats_score, "ats_summary": ats_summary,
+        }},
     )
 
 
@@ -86,3 +95,32 @@ def list_all() -> List[Dict]:
 
     collection = _get_collection()
     return list(collection.find({}, {"_id": 0}))
+
+
+def assign_job(record_id: str, job_id):
+    if settings.LOCAL_MODE:
+        records = _read_local()
+        for r in records:
+            if r["id"] == record_id:
+                r["job_id"] = job_id
+        _write_local(records)
+        return
+
+    collection = _get_collection()
+    collection.update_one({"id": record_id}, {"$set": {"job_id": job_id}})
+
+
+def add_note(record_id: str, author: str, text: str) -> Dict:
+    note = {"author": author, "text": text, "created_at": datetime.utcnow().isoformat()}
+
+    if settings.LOCAL_MODE:
+        records = _read_local()
+        for r in records:
+            if r["id"] == record_id:
+                r.setdefault("notes", []).append(note)
+        _write_local(records)
+        return note
+
+    collection = _get_collection()
+    collection.update_one({"id": record_id}, {"$push": {"notes": note}})
+    return note

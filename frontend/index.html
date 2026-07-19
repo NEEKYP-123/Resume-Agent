@@ -30,7 +30,7 @@
     --bg-page: #f7f5f4;
     --bg-card: #ffffff;
     --bg-card-hover: #f2eeec;
-    --bg-input: #ffffff;
+    --bg-input: #fbfaf9;
     --border: rgba(11,11,11,0.10);
     --ink-primary: #1a1414;
     --ink-secondary: #5c5250;
@@ -100,16 +100,20 @@
     align-items: center;
     justify-content: center;
     background:
-      radial-gradient(circle at 50% 30%, rgba(229,72,77,0.10), transparent 60%),
+      radial-gradient(circle at 50% 25%, rgba(229,72,77,0.14), transparent 55%),
+      radial-gradient(circle at 85% 80%, rgba(229,72,77,0.08), transparent 50%),
+      radial-gradient(circle at 10% 85%, rgba(229,72,77,0.06), transparent 45%),
+      radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
       var(--bg-page);
+    background-size: auto, auto, auto, 28px 28px, auto;
   }
   #login-view .login-card {
-    width: 340px;
+    width: 320px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 36px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 60px rgba(229,72,77,0.08), 0 0 0 1px rgba(229,72,77,0.06);
   }
   .login-icon {
     width: 48px;
@@ -120,6 +124,7 @@
     align-items: center;
     justify-content: center;
     margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(229,72,77,0.4);
   }
   .login-icon svg { width: 24px; height: 24px; }
   #login-view h1 {
@@ -150,6 +155,24 @@
   }
   #login-view input::placeholder { color: var(--ink-muted); }
   #login-view input:focus { outline: none; border-color: var(--red); }
+  .password-field { position: relative; }
+  .password-field input { padding-right: 40px; }
+  .password-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--ink-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .password-toggle:hover { color: var(--ink-secondary); }
+  .password-toggle svg { width: 17px; height: 17px; }
   .forgot-link {
     display: block;
     text-align: right;
@@ -176,7 +199,20 @@
     cursor: pointer;
     box-shadow: 0 8px 24px rgba(229,72,77,0.35);
   }
-  button.btn-login:hover { filter: brightness(1.05); }
+  button.btn-login:hover:not(:disabled) { filter: brightness(1.05); }
+  button.btn-login:disabled { opacity: 0.75; cursor: default; }
+  button.btn-login .spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    display: inline-block;
+    vertical-align: -3px;
+    margin-right: 8px;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   button.btn-back {
     background: none;
     border: none;
@@ -187,14 +223,48 @@
     margin-bottom: 16px;
   }
   button.btn-back:hover { color: var(--ink-primary); }
-  #login-error, #forgot-error, #reset-error { color: var(--critical); font-size: 13px; min-height: 16px; margin: 8px 0 0; }
-  #forgot-success, #reset-success { color: var(--good); font-size: 13px; min-height: 16px; margin: 8px 0 0; }
+  #login-error, #forgot-error, #reset-error, #signup-error,
+  #forgot-success, #reset-success {
+    font-size: 13px;
+    margin: 12px 0 0;
+    padding: 0;
+  }
+  #login-error:not(:empty), #forgot-error:not(:empty), #reset-error:not(:empty), #signup-error:not(:empty) {
+    color: var(--critical);
+    background: color-mix(in srgb, var(--critical) 12%, transparent);
+    border-left: 3px solid var(--critical);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  #forgot-success:not(:empty), #reset-success:not(:empty) {
+    color: var(--good);
+    background: color-mix(in srgb, var(--good) 12%, transparent);
+    border-left: 3px solid var(--good);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
   .login-footer {
     text-align: center;
     font-size: 12px;
     color: var(--ink-muted);
     margin-top: 24px;
   }
+  .signup-prompt {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-secondary);
+    margin: 16px 0 0;
+  }
+  .link-btn {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+  .link-btn:hover { text-decoration: underline; }
 
   /* ---- app shell ---- */
   #app {
@@ -334,6 +404,188 @@
     margin-bottom: 20px;
   }
   .card h2 { font-size: 14px; margin: 0 0 14px; color: var(--ink-primary); }
+  .card .card-hint { font-size: 12px; color: var(--ink-muted); margin: -8px 0 12px; }
+
+  /* ---- job description settings ---- */
+  #job-description, #new-job-description {
+    width: 100%;
+    min-height: 90px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-input);
+    color: var(--ink-primary);
+    resize: vertical;
+  }
+  #job-description::placeholder, #new-job-description::placeholder { color: var(--ink-muted); }
+  #job-description:focus, #new-job-description:focus { outline: none; border-color: var(--red); }
+  #panel-jobs input, #panel-jobs .field-label { color: var(--ink-primary); }
+  #panel-jobs input {
+    width: 100%;
+    padding: 11px 12px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-input);
+  }
+
+  /* ---- compact table action buttons (jobs/users tables) ---- */
+  .row-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink-secondary);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 4px;
+  }
+  .row-btn:hover { background: var(--bg-card-hover); color: var(--ink-primary); }
+  .row-btn.danger { border-color: var(--critical); color: var(--critical); }
+  .row-btn.danger:hover { background: color-mix(in srgb, var(--critical) 12%, transparent); }
+  .row-btn.link { border-color: var(--red); color: var(--red); }
+  .row-btn.link:hover { background: var(--red-wash); }
+  #job-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--red-wash);
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  #job-filter-chip button {
+    background: none;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
+  }
+  select.job-assign-select {
+    background: var(--bg-input);
+    color: var(--ink-primary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+
+  /* ---- notes modal ---- */
+  #notes-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #notes-modal {
+    width: 420px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  #notes-modal h2 { font-size: 15px; margin: 0 0 4px; color: var(--ink-primary); }
+  #notes-modal .card-hint { margin: 0 0 14px; }
+  #notes-list { overflow-y: auto; margin-bottom: 14px; flex: 1; }
+  .note-item {
+    background: var(--bg-card-hover);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .note-item .note-author { font-weight: 600; color: var(--ink-primary); font-size: 12px; }
+  .note-item .note-text { color: var(--ink-secondary); margin-top: 4px; }
+  .note-empty { font-size: 13px; color: var(--ink-muted); padding: 8px 0; }
+  #notes-new-text {
+    width: 100%;
+    min-height: 60px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-input);
+    color: var(--ink-primary);
+    resize: vertical;
+    margin-bottom: 10px;
+  }
+  #notes-modal-actions { display: flex; justify-content: space-between; gap: 8px; }
+
+  /* ---- score/ATS values as clickable links ---- */
+  .score-link {
+    background: none;
+    border: none;
+    color: var(--red);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+  .score-link:hover { opacity: 0.8; }
+
+  /* ---- score details modal ---- */
+  #score-details-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #score-details-modal {
+    width: 460px;
+    max-height: 75vh;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  #score-details-modal h2 { font-size: 15px; margin: 0 0 4px; color: var(--ink-primary); }
+  #score-details-modal .card-hint { margin: 0 0 16px; }
+  .score-block {
+    background: var(--bg-card-hover);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .score-block .score-block-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-primary);
+    margin-bottom: 6px;
+  }
+  .score-block .score-block-value {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .score-block .score-block-text {
+    font-size: 13px;
+    color: var(--ink-secondary);
+    line-height: 1.5;
+  }
+  #score-details-close { margin-top: 4px; width: 100%; }
 
   /* ---- chart ---- */
   #chart-wrap { position: relative; }
@@ -375,6 +627,14 @@
     cursor: pointer;
   }
   #resume-rows button:hover { background: var(--red-wash); }
+  #resume-rows button.score-link {
+    background: none;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    text-decoration: underline;
+  }
+  #resume-rows button.score-link:hover { background: none; opacity: 0.8; }
 
   /* ---- empty state ---- */
   .empty-state {
@@ -471,26 +731,68 @@
       </div>
       <div class="field-group">
         <label class="field-label">Password</label>
-        <input id="password" type="password" placeholder="••••••••" />
+        <div class="password-field">
+          <input id="password" type="password" placeholder="••••••••" />
+          <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Show password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
       <button type="button" class="forgot-link" onclick="showView('forgot')">Forgot password?</button>
-      <button class="btn-login" onclick="login()">Log in</button>
+      <button class="btn-login" id="login-btn" onclick="login()">Log in</button>
       <p id="login-error"></p>
 
+      <p class="signup-prompt">New user? <button type="button" class="link-btn" onclick="showView('signup')">Sign up</button></p>
       <p class="login-footer">Protected admin area · Resume Agent v1.0</p>
+    </div>
+
+    <!-- Sign up -->
+    <div id="view-signup" class="hidden">
+      <button class="btn-back" onclick="showView('login')">&larr; Back to login</button>
+      <h1>Create an account</h1>
+      <p class="subtitle">Sign up to access the resume dashboard.</p>
+
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <input id="signup-username" placeholder="your.username" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <input id="signup-email" type="email" placeholder="you@example.com" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="password-field">
+          <input id="signup-password" type="password" placeholder="At least 6 characters" />
+          <button type="button" class="password-toggle" onclick="togglePassword('signup-password', this)" aria-label="Show password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Confirm password</label>
+        <div class="password-field">
+          <input id="signup-confirm-password" type="password" placeholder="••••••••" />
+          <button type="button" class="password-toggle" onclick="togglePassword('signup-confirm-password', this)" aria-label="Show password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button class="btn-login" id="signup-btn" onclick="signup()">Create account</button>
+      <p id="signup-error"></p>
     </div>
 
     <!-- Forgot password -->
     <div id="view-forgot" class="hidden">
       <button class="btn-back" onclick="showView('login')">&larr; Back to login</button>
       <h1>Reset your password</h1>
-      <p class="subtitle">We'll email a reset link to the admin inbox.</p>
+      <p class="subtitle">We'll email a reset link if that address has an account.</p>
 
       <div class="field-group">
-        <label class="field-label">Username</label>
-        <input id="forgot-username" placeholder="your.username" />
+        <label class="field-label">Email</label>
+        <input id="forgot-email" type="email" placeholder="you@example.com" />
       </div>
-      <button class="btn-login" onclick="requestReset()">Send reset link</button>
+      <button class="btn-login" id="forgot-btn" onclick="requestReset()">Send reset link</button>
       <p id="forgot-error"></p>
       <p id="forgot-success"></p>
     </div>
@@ -502,9 +804,14 @@
 
       <div class="field-group">
         <label class="field-label">New password</label>
-        <input id="reset-new-password" type="password" placeholder="••••••••" />
+        <div class="password-field">
+          <input id="reset-new-password" type="password" placeholder="••••••••" />
+          <button type="button" class="password-toggle" onclick="togglePassword('reset-new-password', this)" aria-label="Show password">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
-      <button class="btn-login" onclick="submitReset()">Update password</button>
+      <button class="btn-login" id="reset-btn" onclick="submitReset()">Update password</button>
       <p id="reset-error"></p>
       <p id="reset-success"></p>
     </div>
@@ -516,7 +823,10 @@
   <div id="sidebar">
     <div class="brand">Resume Agent</div>
     <nav>
-      <button class="nav-item active">Dashboard</button>
+      <button class="nav-item active" id="nav-dashboard" onclick="switchPanel('dashboard')">Dashboard</button>
+      <button class="nav-item" id="nav-jobs" onclick="switchPanel('jobs')">Job Postings</button>
+      <button class="nav-item hidden" id="nav-users" onclick="switchPanel('users')">Manage Users</button>
+      <button class="nav-item hidden" id="nav-settings" onclick="switchPanel('settings')">Settings</button>
     </nav>
     <div class="nav-spacer"></div>
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
@@ -531,6 +841,7 @@
       <div class="topbar">
         <h1>Dashboard</h1>
         <div class="actions">
+          <span id="job-filter-chip" class="hidden"></span>
           <button class="btn-secondary" onclick="exportCsv()">Export CSV</button>
           <button class="btn-primary" onclick="syncResumes()">Sync from Gmail</button>
         </div>
@@ -556,6 +867,13 @@
       </div>
 
       <div class="card">
+        <h2>Target job description</h2>
+        <p class="card-hint">Used to compute an ATS match score for each resume. Leave blank to skip ATS scoring.</p>
+        <textarea id="job-description" placeholder="Paste the job description here..."></textarea>
+        <button class="btn-secondary" style="margin-top:10px;" onclick="saveJobDescription()">Save</button>
+      </div>
+
+      <div class="card">
         <h2>Resumes received per day</h2>
         <div id="chart-wrap"></div>
       </div>
@@ -564,7 +882,7 @@
         <h2>Resumes</h2>
         <table>
           <thead>
-            <tr><th>Sender</th><th>Filename</th><th>Score</th><th>Status</th><th>Action</th></tr>
+            <tr><th>Sender</th><th>Filename</th><th>Score</th><th>ATS Score</th><th>Job</th><th>Status</th><th>Notes</th><th>Action</th></tr>
           </thead>
           <tbody id="resume-rows"></tbody>
         </table>
@@ -582,30 +900,181 @@
         </div>
       </div>
     </div>
+
+    <!-- Job Postings panel -->
+    <div id="panel-jobs" class="hidden">
+      <div class="topbar">
+        <h1>Job Postings</h1>
+      </div>
+
+      <div class="card hidden" id="create-job-card">
+        <h2>Create a job posting</h2>
+        <div class="field-group">
+          <label class="field-label">Title</label>
+          <input id="new-job-title" placeholder="e.g. Backend Engineer" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Description</label>
+          <textarea id="new-job-description" placeholder="Paste the job description here..."></textarea>
+        </div>
+        <button class="btn-primary" onclick="createJob()">Create job</button>
+      </div>
+
+      <div class="card">
+        <h2>All job postings</h2>
+        <table>
+          <thead>
+            <tr><th>Title</th><th>Description</th><th>Status</th><th>Candidates</th><th>Action</th></tr>
+          </thead>
+          <tbody id="job-rows"></tbody>
+        </table>
+        <div id="jobs-empty" class="hidden" style="font-size:13px; color:var(--ink-muted); padding:12px 0;">No job postings yet.</div>
+      </div>
+    </div>
+
+    <!-- Manage Users panel (admin only) -->
+    <div id="panel-users" class="hidden">
+      <div class="topbar">
+        <h1>Manage Users</h1>
+      </div>
+      <div class="card">
+        <h2>Recruiter accounts</h2>
+        <table>
+          <thead>
+            <tr><th>Username</th><th>Email</th><th>Role</th><th>Action</th></tr>
+          </thead>
+          <tbody id="user-rows"></tbody>
+        </table>
+        <div id="users-empty" class="hidden" style="font-size:13px; color:var(--ink-muted); padding:12px 0;">No signed-up accounts yet.</div>
+      </div>
+    </div>
+
+    <!-- Settings panel (admin only) -->
+    <div id="panel-settings" class="hidden">
+      <div class="topbar">
+        <h1>Settings</h1>
+      </div>
+      <div class="card">
+        <h2>Gemini usage</h2>
+        <p class="card-hint">Internal visibility into scoring volume — not shown to recruiters.</p>
+        <div class="stat-grid" style="margin-bottom:0;">
+          <div class="stat-tile">
+            <div class="stat-label"><span class="stat-dot" style="background:var(--red)"></span>Scoring calls</div>
+            <div class="stat-value" id="usage-calls">0</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label"><span class="stat-dot" style="background:var(--warning)"></span>Prompt tokens</div>
+            <div class="stat-value" id="usage-prompt-tokens">0</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label"><span class="stat-dot" style="background:var(--good)"></span>Response tokens</div>
+            <div class="stat-value" id="usage-candidates-tokens">0</div>
+          </div>
+          <div class="stat-tile">
+            <div class="stat-label"><span class="stat-dot" style="background:var(--critical)"></span>Total tokens</div>
+            <div class="stat-value" id="usage-total-tokens">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <div id="toast-container"></div>
 
+<div id="notes-modal-backdrop" class="hidden" onclick="if(event.target===this) closeNotesModal()">
+  <div id="notes-modal">
+    <h2>Notes</h2>
+    <p class="card-hint" id="notes-modal-hint"></p>
+    <div id="notes-list"></div>
+    <textarea id="notes-new-text" placeholder="Add a note..."></textarea>
+    <div id="notes-modal-actions">
+      <button class="btn-secondary" onclick="closeNotesModal()">Close</button>
+      <button class="btn-primary" onclick="submitNote()">Add note</button>
+    </div>
+  </div>
+</div>
+
+<div id="score-details-modal-backdrop" class="hidden" onclick="if(event.target===this) closeScoreDetailsModal()">
+  <div id="score-details-modal">
+    <h2 id="score-details-filename"></h2>
+    <p class="card-hint" id="score-details-job"></p>
+    <div class="score-block">
+      <div class="score-block-title">
+        <span class="score-block-value" id="score-details-fit-value">—</span>
+        <span>Fit score</span>
+      </div>
+      <div class="score-block-text" id="score-details-fit-text"></div>
+    </div>
+    <div class="score-block">
+      <div class="score-block-title">
+        <span class="score-block-value" id="score-details-ats-value">—</span>
+        <span>ATS match</span>
+      </div>
+      <div class="score-block-text" id="score-details-ats-text"></div>
+    </div>
+    <button class="btn-secondary" id="score-details-close" onclick="closeScoreDetailsModal()">Close</button>
+  </div>
+</div>
+
 <script>
 const API_BASE = "http://localhost:8000/api";
-let token = null;
+let token = localStorage.getItem("token");
+let currentRole = null;
+let currentUsername = null;
 let latestRecords = [];
+let latestJobs = [];
+let dashboardJobFilter = null; // {id, title} or null
+let notesModalRecordId = null;
+
+function setToken(t) {
+  token = t;
+  if (t) {
+    localStorage.setItem("token", t);
+  } else {
+    localStorage.removeItem("token");
+  }
+}
+
+function applyRoleVisibility() {
+  const isAdmin = currentRole === "admin";
+  document.getElementById("nav-users").classList.toggle("hidden", !isAdmin);
+  document.getElementById("nav-settings").classList.toggle("hidden", !isAdmin);
+  document.getElementById("create-job-card").classList.toggle("hidden", !isAdmin);
+}
+
+function switchPanel(panel) {
+  ["dashboard", "jobs", "users", "settings"].forEach(p => {
+    document.getElementById(`panel-${p}`).classList.toggle("hidden", p !== panel);
+    document.getElementById(`nav-${p}`).classList.toggle("active", p === panel);
+  });
+  if (panel === "jobs") loadJobs();
+  if (panel === "users") loadUsers();
+  if (panel === "settings") loadUsage();
+}
 
 function showView(view) {
   document.getElementById("view-login").classList.toggle("hidden", view !== "login");
   document.getElementById("view-forgot").classList.toggle("hidden", view !== "forgot");
   document.getElementById("view-reset").classList.toggle("hidden", view !== "reset");
+  document.getElementById("view-signup").classList.toggle("hidden", view !== "signup");
 }
 
-// If the page loaded from a password-reset email link (?reset_token=...), show that view.
+// If the page loaded from a password-reset email link (?reset_token=...), show that view
+// and skip session restoration — a reset link should never bounce straight into the dashboard.
+let arrivedViaResetLink = false;
 (function checkForResetToken() {
   const params = new URLSearchParams(window.location.search);
   const resetToken = params.get("reset_token");
   if (resetToken) {
     showView("reset");
+    arrivedViaResetLink = true;
   }
 })();
+
+if (!arrivedViaResetLink) {
+  restoreSession();
+}
 
 // Opening splash animation, then reveal whichever view is underneath.
 setTimeout(() => {
@@ -614,41 +1083,120 @@ setTimeout(() => {
   setTimeout(() => splash.remove(), 800);
 }, 3000);
 
+const EYE_OPEN = '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>';
+const EYE_CLOSED = '<path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a18.5 18.5 0 0 1-2.16 3.19M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const showing = input.type === "text";
+  input.type = showing ? "password" : "text";
+  btn.querySelector("svg").innerHTML = showing ? EYE_OPEN : EYE_CLOSED;
+  btn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+}
+
+function setButtonLoading(btnId, loading, label) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.dataset.originalText = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner"></span>${label}`;
+    btn.disabled = true;
+  } else {
+    btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+    btn.disabled = false;
+  }
+}
+
 async function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
-  const res = await fetch(`${API_BASE}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  if (!res.ok) {
-    document.getElementById("login-error").innerText = "Login failed — check credentials";
+  document.getElementById("login-error").innerText = "";
+  setButtonLoading("login-btn", true, "Logging in…");
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("login-error").innerText = data.detail || "Login failed — check credentials";
+      return;
+    }
+    setToken(data.access_token);
+    document.getElementById("login-view").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    await fetchAndApplyRole();
+    loadResumes();
+    loadJobDescription();
+  } catch (e) {
+    document.getElementById("login-error").innerText = "Could not reach the server";
+  } finally {
+    setButtonLoading("login-btn", false);
+  }
+}
+
+async function signup() {
+  const username = document.getElementById("signup-username").value.trim();
+  const email = document.getElementById("signup-email").value.trim();
+  const password = document.getElementById("signup-password").value;
+  const confirmPassword = document.getElementById("signup-confirm-password").value;
+  const errorEl = document.getElementById("signup-error");
+  errorEl.innerText = "";
+
+  if (password !== confirmPassword) {
+    errorEl.innerText = "Passwords do not match";
     return;
   }
-  const data = await res.json();
-  token = data.access_token;
-  document.getElementById("login-view").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-  loadResumes();
+
+  setButtonLoading("signup-btn", true, "Creating account…");
+  try {
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errorEl.innerText = data.detail || "Signup failed";
+      return;
+    }
+    setToken(data.access_token);
+    document.getElementById("login-view").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    await fetchAndApplyRole();
+    loadResumes();
+    loadJobDescription();
+  } catch (e) {
+    errorEl.innerText = "Could not reach the server";
+  } finally {
+    setButtonLoading("signup-btn", false);
+  }
 }
 
 async function requestReset() {
-  const username = document.getElementById("forgot-username").value;
+  const email = document.getElementById("forgot-email").value;
   document.getElementById("forgot-error").innerText = "";
   document.getElementById("forgot-success").innerText = "";
 
-  const res = await fetch(`${API_BASE}/auth/forgot-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    document.getElementById("forgot-error").innerText = data.detail || "Something went wrong";
-    return;
+  setButtonLoading("forgot-btn", true, "Sending…");
+  try {
+    const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("forgot-error").innerText = data.detail || "Something went wrong";
+      return;
+    }
+    document.getElementById("forgot-success").innerText = data.message;
+  } catch (e) {
+    document.getElementById("forgot-error").innerText = "Could not reach the server";
+  } finally {
+    setButtonLoading("forgot-btn", false);
   }
-  document.getElementById("forgot-success").innerText = data.message;
 }
 
 async function submitReset() {
@@ -659,27 +1207,85 @@ async function submitReset() {
   document.getElementById("reset-error").innerText = "";
   document.getElementById("reset-success").innerText = "";
 
-  const res = await fetch(`${API_BASE}/auth/reset-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token: resetToken, new_password: newPassword }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    document.getElementById("reset-error").innerText = data.detail || "Something went wrong";
-    return;
+  setButtonLoading("reset-btn", true, "Updating…");
+  try {
+    const res = await fetch(`${API_BASE}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: resetToken, new_password: newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      document.getElementById("reset-error").innerText = data.detail || "Something went wrong";
+      return;
+    }
+    document.getElementById("reset-success").innerText = data.message;
+    setTimeout(() => {
+      window.location.href = window.location.pathname;
+    }, 1500);
+  } catch (e) {
+    document.getElementById("reset-error").innerText = "Could not reach the server";
+  } finally {
+    setButtonLoading("reset-btn", false);
   }
-  document.getElementById("reset-success").innerText = data.message;
-  setTimeout(() => {
-    window.location.href = window.location.pathname;
-  }, 1500);
 }
 
 function logout() {
-  token = null;
+  setToken(null);
+  currentRole = null;
+  currentUsername = null;
   document.getElementById("app").classList.add("hidden");
   document.getElementById("login-view").classList.remove("hidden");
+  showView("login");
   document.getElementById("password").value = "";
+}
+
+function handleSessionExpired() {
+  setToken(null);
+  currentRole = null;
+  currentUsername = null;
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("login-view").classList.remove("hidden");
+  showView("login");
+  document.getElementById("login-error").innerText = "Session expired — please log in again";
+}
+
+function decodeJwtExpiry(t) {
+  try {
+    const payload = JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload.exp; // seconds since epoch
+  } catch (e) {
+    return null;
+  }
+}
+
+async function restoreSession() {
+  if (!token) return;
+
+  const exp = decodeJwtExpiry(token);
+  if (!exp || Date.now() >= exp * 1000) {
+    setToken(null);
+    return;
+  }
+
+  // Optimistic: the token isn't expired client-side, so show the dashboard
+  // immediately rather than waiting on a round-trip.
+  document.getElementById("login-view").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  loadResumes();
+  loadJobDescription();
+
+  // Confirm server-side and learn the role — authFetch redirects to login on its own if this 401s.
+  await fetchAndApplyRole();
+}
+
+async function fetchAndApplyRole() {
+  const res = await authFetch(`${API_BASE}/auth/verify`);
+  if (!res || !res.ok) return;
+  const data = await res.json();
+  currentUsername = data.username;
+  currentRole = data.role;
+  applyRoleVisibility();
 }
 
 const SUN_ICON = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
@@ -725,11 +1331,11 @@ function renderTableSkeleton(rowCount = 4) {
   rows.innerHTML = "";
   for (let i = 0; i < rowCount; i++) {
     const tr = document.createElement("tr");
-    for (let c = 0; c < 5; c++) {
+    for (let c = 0; c < 8; c++) {
       const td = document.createElement("td");
       const bar = document.createElement("div");
       bar.className = "skeleton-bar";
-      bar.style.width = c === 4 ? "50px" : "80%";
+      bar.style.width = c === 7 ? "50px" : "80%";
       td.appendChild(bar);
       tr.appendChild(td);
     }
@@ -741,13 +1347,96 @@ function authHeaders(extra = {}) {
   return { "Authorization": `Bearer ${token}`, ...extra };
 }
 
+async function authFetch(url, options = {}) {
+  const { headers, ...rest } = options;
+  let res;
+  try {
+    res = await fetch(url, { ...rest, headers: authHeaders(headers || {}) });
+  } catch (e) {
+    showToast("Could not reach the server", "error");
+    return null;
+  }
+  if (res.status === 401) {
+    handleSessionExpired();
+    return null;
+  }
+  return res;
+}
+
+async function loadJobDescription() {
+  const res = await authFetch(`${API_BASE}/settings/job-description`);
+  if (!res || !res.ok) return;
+  const data = await res.json();
+  document.getElementById("job-description").value = data.job_description || "";
+}
+
+async function saveJobDescription() {
+  const text = document.getElementById("job-description").value;
+  const res = await authFetch(`${API_BASE}/settings/job-description`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job_description: text }),
+  });
+  if (!res) return;
+  if (res.ok) {
+    showToast("Job description saved", "success");
+  } else {
+    showToast("Could not save job description", "error");
+  }
+}
+
+async function fetchJobsList() {
+  const res = await authFetch(`${API_BASE}/jobs`);
+  if (!res || !res.ok) return latestJobs;
+  latestJobs = await res.json();
+  return latestJobs;
+}
+
 async function loadResumes() {
-  const res = await fetch(`${API_BASE}/resumes`, { headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/resumes`);
+  if (!res) return;
   const records = await res.json();
   latestRecords = records;
+  await fetchJobsList();
+  renderDashboard();
+}
+
+function getFilteredRecords() {
+  if (!dashboardJobFilter) return latestRecords;
+  return latestRecords.filter(r => r.job_id === dashboardJobFilter.id);
+}
+
+function renderDashboard() {
+  const chip = document.getElementById("job-filter-chip");
+  if (dashboardJobFilter) {
+    chip.classList.remove("hidden");
+    chip.innerHTML = "";
+    const label = document.createElement("span");
+    label.textContent = `Filtered: ${dashboardJobFilter.title}`;
+    const clearBtn = document.createElement("button");
+    clearBtn.textContent = "×";
+    clearBtn.setAttribute("aria-label", "Clear filter");
+    clearBtn.onclick = clearDashboardJobFilter;
+    chip.append(label, clearBtn);
+  } else {
+    chip.classList.add("hidden");
+  }
+
+  const records = getFilteredRecords();
   renderStats(records);
   renderChart(records);
   renderTable(records);
+}
+
+function filterDashboardByJob(jobId, jobTitle) {
+  dashboardJobFilter = { id: jobId, title: jobTitle };
+  switchPanel("dashboard");
+  renderDashboard();
+}
+
+function clearDashboardJobFilter() {
+  dashboardJobFilter = null;
+  renderDashboard();
 }
 
 function renderStats(records) {
@@ -771,21 +1460,65 @@ function renderTable(records) {
     const tdFile = document.createElement("td");
     tdFile.textContent = r.filename;
     const tdScore = document.createElement("td");
-    tdScore.textContent = r.score ?? "—";
+    const tdAts = document.createElement("td");
+    if (r.score !== null && r.score !== undefined) {
+      const scoreLink = document.createElement("button");
+      scoreLink.className = "score-link";
+      scoreLink.textContent = r.score;
+      scoreLink.onclick = () => openScoreDetailsModal(r.id);
+      tdScore.appendChild(scoreLink);
+    } else {
+      tdScore.textContent = "—";
+    }
+    if (r.ats_score !== null && r.ats_score !== undefined) {
+      const atsLink = document.createElement("button");
+      atsLink.className = "score-link";
+      atsLink.textContent = r.ats_score;
+      atsLink.onclick = () => openScoreDetailsModal(r.id);
+      tdAts.appendChild(atsLink);
+    } else {
+      tdAts.textContent = "—";
+    }
+
+    const tdJob = document.createElement("td");
+    const jobSelect = document.createElement("select");
+    jobSelect.className = "job-assign-select";
+    const noneOption = document.createElement("option");
+    noneOption.value = "";
+    noneOption.textContent = "Unassigned";
+    jobSelect.appendChild(noneOption);
+    latestJobs.forEach(j => {
+      const isCurrentlyAssigned = r.job_id === j.id;
+      if (j.status !== "open" && !isCurrentlyAssigned) return; // hide closed jobs, unless already assigned
+      const opt = document.createElement("option");
+      opt.value = j.id;
+      opt.textContent = j.status === "open" ? j.title : `${j.title} (closed)`;
+      if (isCurrentlyAssigned) opt.selected = true;
+      jobSelect.appendChild(opt);
+    });
+    jobSelect.onchange = () => assignJob(r.id, jobSelect.value || null);
+    tdJob.appendChild(jobSelect);
+
     const tdStatus = document.createElement("td");
     const badge = document.createElement("span");
     badge.className = `badge ${r.status}`;
     badge.textContent = r.status;
     tdStatus.appendChild(badge);
-    const tdAction = document.createElement("td");
-    if (r.status === "pending") {
-      const btn = document.createElement("button");
-      btn.textContent = "Score";
-      btn.onclick = () => scoreResume(r.id);
-      tdAction.appendChild(btn);
-    }
 
-    tr.append(tdSender, tdFile, tdScore, tdStatus, tdAction);
+    const tdNotes = document.createElement("td");
+    const notesBtn = document.createElement("button");
+    notesBtn.className = "row-btn";
+    notesBtn.textContent = `Notes (${(r.notes || []).length})`;
+    notesBtn.onclick = () => openNotesModal(r.id);
+    tdNotes.appendChild(notesBtn);
+
+    const tdAction = document.createElement("td");
+    const scoreBtn = document.createElement("button");
+    scoreBtn.textContent = r.status === "pending" ? "Score" : "Re-score";
+    scoreBtn.onclick = () => scoreResume(r.id);
+    tdAction.appendChild(scoreBtn);
+
+    tr.append(tdSender, tdFile, tdScore, tdAts, tdJob, tdStatus, tdNotes, tdAction);
     rows.appendChild(tr);
   });
 }
@@ -909,43 +1642,345 @@ function renderChart(records) {
 
 async function syncResumes() {
   renderTableSkeleton();
-  try {
-    const res = await fetch(`${API_BASE}/resumes/sync`, { method: "POST", headers: authHeaders() });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.detail || "Sync failed", "error");
-    } else {
-      showToast(`Synced ${data.synced} new resume${data.synced === 1 ? "" : "s"}`, "success");
-    }
-  } catch (e) {
-    showToast("Sync failed — check backend connection", "error");
+  const res = await authFetch(`${API_BASE}/resumes/sync`, { method: "POST" });
+  if (!res) { loadResumes(); return; }
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Sync failed", "error");
+  } else {
+    showToast(`Synced ${data.synced} new resume${data.synced === 1 ? "" : "s"}`, "success");
   }
   loadResumes();
 }
 
 async function scoreResume(id) {
-  try {
-    const res = await fetch(`${API_BASE}/resumes/${id}/score`, { method: "POST", headers: authHeaders() });
-    const data = await res.json();
-    if (!res.ok) {
-      showToast(data.detail || "Scoring failed", "error");
-    } else {
-      showToast(`Scored ${data.score} — ${data.status}`, "success");
-    }
-  } catch (e) {
-    showToast("Scoring failed — check backend connection", "error");
+  const res = await authFetch(`${API_BASE}/resumes/${id}/score`, { method: "POST" });
+  if (!res) { loadResumes(); return; }
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.detail || "Scoring failed", "error");
+  } else {
+    showToast(`Scored ${data.score} — ${data.status}`, "success");
   }
   loadResumes();
 }
 
 async function exportCsv() {
-  const res = await fetch(`${API_BASE}/resumes/export/csv`, { headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/resumes/export/csv`);
+  if (!res) return;
   const blob = await res.blob();
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = "resumes_export.csv";
   a.click();
+}
+
+async function assignJob(recordId, jobId) {
+  const res = await authFetch(`${API_BASE}/resumes/${recordId}/assign-job`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job_id: jobId }),
+  });
+  if (!res) return;
+  if (res.ok) {
+    const data = await res.json();
+    if (jobId && data.score !== undefined) {
+      showToast(`Re-scored against new job — ${data.score}${data.ats_score != null ? ` / ATS ${data.ats_score}` : ""} (${data.status})`, "success");
+    } else {
+      showToast("Job assignment updated", "success");
+    }
+  } else {
+    showToast("Could not update job assignment", "error");
+  }
+  loadResumes();
+}
+
+/* ---- Job Postings ---- */
+
+async function loadJobs() {
+  await loadResumes(); // also refreshes latestJobs, and gives us candidate counts to work with
+  renderJobs(latestJobs);
+}
+
+function renderJobs(jobs) {
+  const rows = document.getElementById("job-rows");
+  const empty = document.getElementById("jobs-empty");
+  rows.innerHTML = "";
+  empty.classList.toggle("hidden", jobs.length > 0);
+
+  jobs.forEach(j => {
+    const tr = document.createElement("tr");
+    const candidateCount = latestRecords.filter(r => r.job_id === j.id).length;
+
+    const tdTitle = document.createElement("td");
+    tdTitle.textContent = j.title;
+    const tdDesc = document.createElement("td");
+    tdDesc.textContent = j.description ? (j.description.length > 80 ? j.description.slice(0, 80) + "…" : j.description) : "—";
+    const tdStatus = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = `badge ${j.status === "open" ? "shortlisted" : "rejected"}`;
+    badge.textContent = j.status;
+    tdStatus.appendChild(badge);
+
+    const tdCandidates = document.createElement("td");
+    const viewBtn = document.createElement("button");
+    viewBtn.className = "row-btn link";
+    viewBtn.textContent = `${candidateCount} candidate${candidateCount === 1 ? "" : "s"}`;
+    viewBtn.onclick = () => filterDashboardByJob(j.id, j.title);
+    tdCandidates.appendChild(viewBtn);
+
+    const tdAction = document.createElement("td");
+    if (currentRole === "admin") {
+      const editBtn = document.createElement("button");
+      editBtn.className = "row-btn";
+      editBtn.textContent = "Edit";
+      editBtn.onclick = () => editJobPosting(j);
+      tdAction.appendChild(editBtn);
+
+      if (j.status === "open") {
+        const closeBtn = document.createElement("button");
+        closeBtn.className = "row-btn danger";
+        closeBtn.textContent = "Close";
+        closeBtn.onclick = () => closeJobPosting(j.id);
+        tdAction.appendChild(closeBtn);
+      }
+    }
+
+    tr.append(tdTitle, tdDesc, tdStatus, tdCandidates, tdAction);
+    rows.appendChild(tr);
+  });
+}
+
+async function createJob() {
+  const title = document.getElementById("new-job-title").value.trim();
+  const description = document.getElementById("new-job-description").value;
+  if (!title) {
+    showToast("Job title is required", "error");
+    return;
+  }
+
+  const res = await authFetch(`${API_BASE}/jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, description }),
+  });
+  if (!res) return;
+  if (res.ok) {
+    document.getElementById("new-job-title").value = "";
+    document.getElementById("new-job-description").value = "";
+    showToast("Job posting created", "success");
+    loadJobs();
+  } else {
+    const data = await res.json();
+    showToast(data.detail || "Could not create job posting", "error");
+  }
+}
+
+async function editJobPosting(job) {
+  const newTitle = window.prompt("Job title:", job.title);
+  if (newTitle === null) return;
+  const newDescription = window.prompt("Job description:", job.description || "");
+  if (newDescription === null) return;
+
+  const res = await authFetch(`${API_BASE}/jobs/${job.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: newTitle, description: newDescription }),
+  });
+  if (!res) return;
+  if (res.ok) {
+    showToast("Job posting updated", "success");
+    loadJobs();
+  } else {
+    showToast("Could not update job posting", "error");
+  }
+}
+
+async function closeJobPosting(jobId) {
+  const res = await authFetch(`${API_BASE}/jobs/${jobId}/close`, { method: "POST" });
+  if (!res) return;
+  if (res.ok) {
+    showToast("Job posting closed", "success");
+    loadJobs();
+  } else {
+    showToast("Could not close job posting", "error");
+  }
+}
+
+/* ---- Manage Users (admin only) ---- */
+
+async function loadUsers() {
+  const res = await authFetch(`${API_BASE}/users`);
+  if (!res) return;
+  if (!res.ok) {
+    showToast("Could not load users", "error");
+    return;
+  }
+  renderUsers(await res.json());
+}
+
+function renderUsers(users) {
+  const rows = document.getElementById("user-rows");
+  const empty = document.getElementById("users-empty");
+  rows.innerHTML = "";
+  empty.classList.toggle("hidden", users.length > 0);
+
+  users.forEach(u => {
+    const tr = document.createElement("tr");
+
+    const tdUsername = document.createElement("td");
+    tdUsername.textContent = u.username;
+    const tdEmail = document.createElement("td");
+    tdEmail.textContent = u.email || "—";
+    const tdRole = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = `badge ${u.role === "admin" ? "shortlisted" : "pending"}`;
+    badge.textContent = u.role;
+    tdRole.appendChild(badge);
+
+    const tdAction = document.createElement("td");
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "row-btn";
+    toggleBtn.textContent = u.role === "admin" ? "Make recruiter" : "Make admin";
+    toggleBtn.onclick = () => setUserRole(u.username, u.role === "admin" ? "recruiter" : "admin");
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "row-btn danger";
+    removeBtn.textContent = "Remove";
+    removeBtn.onclick = () => removeUser(u.username);
+    tdAction.append(toggleBtn, removeBtn);
+
+    tr.append(tdUsername, tdEmail, tdRole, tdAction);
+    rows.appendChild(tr);
+  });
+}
+
+async function setUserRole(username, role) {
+  const res = await authFetch(`${API_BASE}/users/${username}/role`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role }),
+  });
+  if (!res) return;
+  if (res.ok) {
+    showToast(`${username} is now ${role}`, "success");
+    loadUsers();
+  } else {
+    showToast("Could not update role", "error");
+  }
+}
+
+async function removeUser(username) {
+  if (!window.confirm(`Remove ${username}? This cannot be undone.`)) return;
+
+  const res = await authFetch(`${API_BASE}/users/${username}`, { method: "DELETE" });
+  if (!res) return;
+  if (res.ok) {
+    showToast(`Removed ${username}`, "success");
+    loadUsers();
+  } else {
+    const data = await res.json();
+    showToast(data.detail || "Could not remove user", "error");
+  }
+}
+
+/* ---- Gemini Usage (admin only) ---- */
+
+async function loadUsage() {
+  const res = await authFetch(`${API_BASE}/usage`);
+  if (!res) return;
+  if (!res.ok) {
+    showToast("Could not load usage", "error");
+    return;
+  }
+  const data = await res.json();
+  document.getElementById("usage-calls").textContent = data.call_count;
+  document.getElementById("usage-prompt-tokens").textContent = data.prompt_tokens;
+  document.getElementById("usage-candidates-tokens").textContent = data.candidates_tokens;
+  document.getElementById("usage-total-tokens").textContent = data.total_tokens;
+}
+
+/* ---- Notes modal ---- */
+
+function openNotesModal(recordId) {
+  notesModalRecordId = recordId;
+  const record = latestRecords.find(r => r.id === recordId);
+  document.getElementById("notes-modal-hint").textContent =
+    currentRole === "admin" ? "Showing notes from every recruiter." : "Showing only notes you've written.";
+  renderNotesList((record && record.notes) || []);
+  document.getElementById("notes-new-text").value = "";
+  document.getElementById("notes-modal-backdrop").classList.remove("hidden");
+}
+
+function closeNotesModal() {
+  document.getElementById("notes-modal-backdrop").classList.add("hidden");
+  notesModalRecordId = null;
+}
+
+function openScoreDetailsModal(recordId) {
+  const record = latestRecords.find(r => r.id === recordId);
+  if (!record) return;
+
+  document.getElementById("score-details-filename").textContent = record.filename;
+  const job = latestJobs.find(j => j.id === record.job_id);
+  document.getElementById("score-details-job").textContent = job ? `Scored against: ${job.title}` : "Scored against: general fit (no job assigned)";
+
+  document.getElementById("score-details-fit-value").textContent = record.score ?? "—";
+  document.getElementById("score-details-fit-text").textContent = record.summary || "No summary available.";
+
+  document.getElementById("score-details-ats-value").textContent = record.ats_score ?? "—";
+  document.getElementById("score-details-ats-text").textContent =
+    record.ats_summary || "Set a target job description in Settings, or assign this resume to a job posting, to enable ATS matching.";
+
+  document.getElementById("score-details-modal-backdrop").classList.remove("hidden");
+}
+
+function closeScoreDetailsModal() {
+  document.getElementById("score-details-modal-backdrop").classList.add("hidden");
+}
+
+function renderNotesList(notes) {
+  const list = document.getElementById("notes-list");
+  list.innerHTML = "";
+  if (notes.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "note-empty";
+    empty.textContent = "No notes yet.";
+    list.appendChild(empty);
+    return;
+  }
+  notes.forEach(n => {
+    const item = document.createElement("div");
+    item.className = "note-item";
+    const author = document.createElement("div");
+    author.className = "note-author";
+    author.textContent = n.author;
+    const text = document.createElement("div");
+    text.className = "note-text";
+    text.textContent = n.text;
+    item.append(author, text);
+    list.appendChild(item);
+  });
+}
+
+async function submitNote() {
+  const text = document.getElementById("notes-new-text").value.trim();
+  if (!text || !notesModalRecordId) return;
+
+  const res = await authFetch(`${API_BASE}/resumes/${notesModalRecordId}/notes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!res) return;
+  if (res.ok) {
+    document.getElementById("notes-new-text").value = "";
+    await loadResumes();
+    const record = latestRecords.find(r => r.id === notesModalRecordId);
+    renderNotesList((record && record.notes) || []);
+  } else {
+    showToast("Could not add note", "error");
+  }
 }
 </script>
 </body>

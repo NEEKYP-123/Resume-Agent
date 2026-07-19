@@ -1,8 +1,8 @@
 """
-Gmail service — handles OAuth 2.0 auth, pulls resume attachments from the
-inbox (filtered by label, e.g. "Resumes"), relabels each processed email so a
-repeat sync doesn't re-fetch (and re-create tracking entries for) it, and
-sends the admin password-reset email.
+Gmail service — handles OAuth 2.0 auth, scans the whole inbox for emails with
+attachments (resume-or-not — that classification happens in gemini_service),
+labels each scanned email so a repeat sync doesn't re-fetch it, and sends the
+admin/user password-reset email.
 
 To get a refresh token the first time:
 1. Create OAuth client credentials in Google Cloud Console (Desktop app type).
@@ -38,12 +38,15 @@ def _get_gmail_client():
     return build("gmail", "v1", credentials=creds)
 
 
-def fetch_resume_emails(max_results: int = 20) -> List[Dict]:
+def fetch_candidate_emails(max_results: int = 20) -> List[Dict]:
     """
+    Scans the whole inbox for emails with attachments, excluding ones already
+    scanned in a previous sync. Whether an attachment is actually a resume is
+    decided later (gemini_service.is_resume) — this just returns candidates.
     Returns a list of dicts: {message_id, sender, subject, date, attachments: [{filename, data (bytes)}]}
     """
     service = _get_gmail_client()
-    query = f"label:{settings.GMAIL_LABEL_FILTER} has:attachment"
+    query = f"has:attachment -label:{settings.GMAIL_PROCESSED_LABEL}"
 
     results = service.users().messages().list(userId="me", q=query, maxResults=max_results).execute()
     messages = results.get("messages", [])
@@ -95,17 +98,17 @@ def _get_label_id(service, label_name: str, create_if_missing: bool = False) -> 
 
 def mark_processed(message_id: str):
     """
-    Moves a synced email out of the source label (GMAIL_LABEL_FILTER) and into
-    the processed label (GMAIL_PROCESSED_LABEL), so it's excluded from the next sync's query.
+    Labels a scanned email as processed (whether or not it turned out to be a
+    resume), so it's excluded from the next sync's query — every email with an
+    attachment only ever gets classified once.
     """
     service = _get_gmail_client()
-    source_label_id = _get_label_id(service, settings.GMAIL_LABEL_FILTER)
     processed_label_id = _get_label_id(service, settings.GMAIL_PROCESSED_LABEL, create_if_missing=True)
 
     service.users().messages().modify(
         userId="me",
         id=message_id,
-        body={"removeLabelIds": [source_label_id], "addLabelIds": [processed_label_id]},
+        body={"addLabelIds": [processed_label_id]},
     ).execute()
 
 
@@ -115,14 +118,12 @@ def get_own_email_address() -> str:
     return profile["emailAddress"]
 
 
-def send_email(subject: str, body_text: str):
+def send_email(to_address: str, subject: str, body_text: str):
     """
-    Sends an email from the authorized account to itself (used for the
-    password-reset link, since this app has a single admin whose inbox is
-    the same account it's already authorized against).
+    Sends an email from the authorized Gmail account to an arbitrary recipient
+    (e.g. a recruiter's own email, for their password-reset link).
     """
     service = _get_gmail_client()
-    to_address = get_own_email_address()
 
     message = MIMEText(body_text)
     message["to"] = to_address
